@@ -29,43 +29,60 @@ def display_all(currency_list):
         currency_list[i].display_info()
         print()
 
-url = "https://coinmarketcap.com/"
-cmc_table_class = "cmc-table"
-name_class = "kKpPOn"
-symbol_class = "coin-item-symbol"
-price_class = "cAhksY"
-market_cap_class = "bCdPBp"
+def get_currency_list():
+    url = "https://coinmarketcap.com/"
+    cmc_table_class = "cmc-table"
+    name_class = "kKpPOn"
+    symbol_class = "coin-item-symbol"
+    price_class = "cAhksY"
+    market_cap_class = "bCdPBp"
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    currency_list = []
+    driver = webdriver.Chrome(options=options)
+    pages = 0
 
-options = webdriver.ChromeOptions()
-options.add_argument('--headless')
-driver = webdriver.Chrome(options=options)
-driver.get(url)
+    while True:
+        try:
+            pages = int(input("How many pages do you want to parse?: "))
+            break
+        except ValueError:
+            pass
 
-for i in range(15):
-    driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
-    time.sleep(0.5)
+    for page_number in range(1, pages + 1):
+        print("Parsing: " + url + f"?page={page_number}")
+        driver.get(url + f"?page={page_number}")
 
-names = driver.find_elements(By.XPATH, f"//table[contains(@class, '{cmc_table_class}')]//p[contains(@class, '{name_class}')]")
-symbols = driver.find_elements(By.XPATH, f"//table[contains(@class, '{cmc_table_class}')]//p[contains(@class, '{symbol_class}')]")
-prices = driver.find_elements(By.XPATH, f"//table[contains(@class, '{cmc_table_class}')]//div[contains(@class, '{price_class}')]")
-market_caps = driver.find_elements(By.XPATH, f"//table[contains(@class, '{cmc_table_class}')]//span[contains(@class, '{market_cap_class}')]")
+        for i in range(15):
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+            time.sleep(0.5)
 
-currency_list = []
+        names = driver.find_elements(By.XPATH, f"//table[contains(@class, '{cmc_table_class}')]//p[contains(@class, '{name_class}')]")
+        symbols = driver.find_elements(By.XPATH, f"//table[contains(@class, '{cmc_table_class}')]//p[contains(@class, '{symbol_class}')]")
+        prices = driver.find_elements(By.XPATH, f"//table[contains(@class, '{cmc_table_class}')]//div[contains(@class, '{price_class}')]")
+        market_caps = driver.find_elements(By.XPATH, f"//table[contains(@class, '{cmc_table_class}')]//span[contains(@class, '{market_cap_class}')]")
 
-for i in range(0, len(names)):
-    currency_list.append(Currency(names[i].text, symbols[i].text, prices[i].text, market_caps[i].text))
+        for i in range(len(names)):
+            currency_list.append(Currency(names[i].text, symbols[i].text, prices[i].text, market_caps[i].text))
 
-driver.close()
-driver.quit()
+    driver.close()
+    driver.quit()
+    return currency_list
 
+os.system("cls")
+currency_list = get_currency_list()
 os.system("cls")
 input_name = ""
 while (input_name != "0"):
-    input_name = input("Enter the currency name (1 - print all, 0 - exit): ")
+    input_name = input("Enter the currency name (1 - print all, 2 - reparse data, 0 - exit): ")
     print()
 
     if (input_name == "1"):
         display_all(currency_list)
+    elif (input_name == "2"):
+        os.system("cls")
+        currency_list = get_currency_list()
+        os.system("cls")
     elif (input_name != "0"):
         result = search(currency_list, input_name)
         if (result is not None):
